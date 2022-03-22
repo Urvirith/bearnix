@@ -11,13 +11,13 @@ OBJ 		:= $(TOOLCHAIN)objcopy	# Object Copy
 # -mcpu=cortex-m4	Compile for the ARM M4 Processor
 # mthumb			Target the MTHUMB Instruction Set
 # -ftlo				Set Linker Time Optimisations
-ARCH 		:= m33
+ARCH 		:= a53
 TARGET_ARCH := -mcpu=cortex-$(ARCH)
-THUMB		:= -mthumb
+FREESTAND 	:= -ffreestanding
 LINKTIME	:= -flto
-CFLAGS	  	:= -Os $(TARGET_ARCH) $(THUMB) #$(LINKTIME)
-ASFLAGS		:= $(TARGET_ARCH) $(THUMB)
-LDFLAGS 	:= -T 
+CFLAGS	  	:= -Os $(TARGET_ARCH) $(FREESTAND) #$(LINKTIME)
+ASFLAGS		:= $(TARGET_ARCH)
+LDFLAGS 	:= -T
 OBJFLAGS	:= -O binary
 
 SRC_DIR   := ./src
@@ -29,19 +29,12 @@ OBJ_DIR	  := ./obj
 BIN_DIR	  := ./bin
 
 #ONLY ONE
-STARTUP		:= startup_ARMCM33.s
+STARTUP		:= startup.s
 
 #ONLY ONE
-LINKER		:= gcc_arm.ld
+LINKER		:= linker.ld
 
-OBJS :=	$(OBJ_DIR)/common.o \
-		$(OBJ_DIR)/gpio.o \
-		$(OBJ_DIR)/rcc.o \
-		$(OBJ_DIR)/timer.o \
-		$(OBJ_DIR)/usart.o \
-		$(OBJ_DIR)/spi.o \
-		$(OBJ_DIR)/nvic.o \
-		$(OBJ_DIR)/main.o
+OBJS :=	$(OBJ_DIR)/main.o
 
 #	EXAMPLE OF AUTOMATIC VARIABLES
 #	%.o: %.c %.h common.h
@@ -59,10 +52,10 @@ OBJS :=	$(OBJ_DIR)/common.o \
 #			(All Source)
 #	%.o: 	%.c %.h common.h
 #		$(CC) $(CFLAGS) -c $^
-release: $(BIN_DIR)/main.bin
+release: $(BIN_DIR)/kernel8.img
 
 # Build An ELF 
-$(BIN_DIR)/main.bin: $(BIN_DIR)/main.elf
+$(BIN_DIR)/kernel8.img: $(BIN_DIR)/main.elf
 	$(OBJ) $(OBJFLAGS) $^ $@
 
 # Build An ELF 
@@ -71,13 +64,10 @@ $(BIN_DIR)/main.elf: $(LINK_DIR)/$(LINKER) $(OBJS) $(BIN_DIR)/startup.o
 
 # Build Dependances
 $(BIN_DIR)/startup.o: $(START_DIR)/$(STARTUP)
-	$(AS) $< $(ASFLAGS) -o $@
+	$(AS) -c $< $(ASFLAGS) -o $@
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/%.h
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) -c  $< -o $@
-
-$(OBJ_DIR)/%.o: $(HAL_DIR)/%.c $(HAL_DIR)/%.h $(HAL_DIR)/common.h
-	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
 	rm -f $(OBJ_DIR)/*.o
