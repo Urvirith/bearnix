@@ -73,19 +73,10 @@ clean:
 	rm -f $(OBJ_DIR)/*.o
 	rm -f $(BIN_DIR)/*.o
 	rm -f $(BIN_DIR)/*.elf
-	rm -f $(BIN_DIR)/*.bin
+	rm -f $(BIN_DIR)/*.img
 
-flash:
-	STM32_Programmer_CLI -c port=SWD -w $(BLD_DIR)/main.bin 0x08000000
-
-info:
-	STM32_Programmer_CLI -c port=SWD
-
-reset:
-	STM32_Programmer_CLI -c port=SWD -rst
-
-hard_reset:
-	STM32_Programmer_CLI -c port=SWD -hardRst
+run:
+	qemu-system-aarch64 -M raspi3b -kernel bin/kernel8.img -serial stdio
 
 setup:
 	mkdir obj
