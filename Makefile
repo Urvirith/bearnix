@@ -14,8 +14,9 @@ OBJ 		:= $(TOOLCHAIN)objcopy	# Object Copy
 ARCH 		:= a53
 TARGET_ARCH := -mcpu=cortex-$(ARCH)
 FREESTAND 	:= -ffreestanding
+WALL		:= -Wall -Wextra
 LINKTIME	:= -flto
-CFLAGS	  	:= -Os $(TARGET_ARCH) $(FREESTAND) #$(LINKTIME)
+CFLAGS	  	:= -Os $(TARGET_ARCH) $(FREESTAND) $(WALL)
 ASFLAGS		:= $(TARGET_ARCH)
 LDFLAGS 	:= -T
 OBJFLAGS	:= -O binary
@@ -54,7 +55,13 @@ OBJS :=	$(OBJ_DIR)/main.o
 #		$(CC) $(CFLAGS) -c $^
 release: $(BIN_DIR)/kernel8.img
 
-# Build An ELF 
+bin: $(BIN_DIR)/kernel8.bin
+
+# Build An BIN 
+$(BIN_DIR)/kernel8.bin: $(BIN_DIR)/main.elf
+	$(OBJ) $(OBJFLAGS) $^ $@
+
+# Build An IMG 
 $(BIN_DIR)/kernel8.img: $(BIN_DIR)/main.elf
 	$(OBJ) $(OBJFLAGS) $^ $@
 
@@ -73,6 +80,7 @@ clean:
 	rm -f $(OBJ_DIR)/*.o
 	rm -f $(BIN_DIR)/*.o
 	rm -f $(BIN_DIR)/*.elf
+	rm -f $(BIN_DIR)/*.bin
 	rm -f $(BIN_DIR)/*.img
 
 run:

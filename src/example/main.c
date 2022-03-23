@@ -1,17 +1,29 @@
 #include <stddef.h>
 #include <stdint.h>
-#include "hal/gpio.h"
-   
+ 
+static uint32_t MMIO_BASE;
+ 
+// The MMIO area base address, depends on board type
+static inline void mmio_init(int raspi)
+{
+    switch (raspi) {
+        case 2:
+        case 3:  MMIO_BASE = 0x3F000000; break; // for raspi2 & 3
+        case 4:  MMIO_BASE = 0xFE000000; break; // for raspi4
+        default: MMIO_BASE = 0x20000000; break; // for raspi1, raspi zero etc.
+    }
+}
+ 
 // Memory-Mapped I/O output
 static inline void mmio_write(uint32_t reg, uint32_t data)
 {
-	*(volatile uint32_t*)(reg) = data;
+	*(volatile uint32_t*)(MMIO_BASE + reg) = data;
 }
  
 // Memory-Mapped I/O input
 static inline uint32_t mmio_read(uint32_t reg)
 {
-	return *(volatile uint32_t*)(reg);
+	return *(volatile uint32_t*)(MMIO_BASE + reg);
 }
  
 // Loop <delay> times in a way that the compiler won't optimize away
@@ -23,10 +35,8 @@ static inline void delay(int32_t count)
  
 enum
 {
-
-	MMIO_BASE = 0x3F000000, 
     // The offsets for reach register.
-    GPIO_BASE = (MMIO_BASE + 0x200000),
+    GPIO_BASE = 0x200000,
  
     // Controls actuation of pull up/down to ALL GPIO pins.
     GPPUD = (GPIO_BASE + 0x94),
@@ -37,7 +47,7 @@ enum
     // The base address for UART.
     UART0_BASE = (GPIO_BASE + 0x1000), // for raspi4 0xFE201000, raspi2 & 3 0x3F201000, and 0x20201000 for raspi1
  
-    // The offsets for reach register for the UART. 1059065856
+    // The offsets for reach register for the UART.
     UART0_DR     = (UART0_BASE + 0x00),
     UART0_RSRECR = (UART0_BASE + 0x04),
     UART0_FR     = (UART0_BASE + 0x18),
@@ -58,7 +68,7 @@ enum
     UART0_TDR    = (UART0_BASE + 0x8C),
  
     // The offsets for Mailbox registers
-    MBOX_BASE    = (MMIO_BASE + 0xB880),
+    MBOX_BASE    = 0xB880,
     MBOX_READ    = (MBOX_BASE + 0x00),
     MBOX_STATUS  = (MBOX_BASE + 0x18),
     MBOX_WRITE   = (MBOX_BASE + 0x20)
@@ -70,7 +80,9 @@ volatile unsigned int  __attribute__((aligned(16))) mbox[9] = {
 };
  
 void uart_init(int raspi)
-{ 
+{
+	mmio_init(raspi);
+ 
 	// Disable UART0.
 	mmio_write(UART0_CR, 0x00000000);
 	// Setup the GPIO pin 14 && 15.
@@ -145,7 +157,7 @@ void uart_puts(const char* str)
 void kernel_main(uint64_t dtb_ptr32, uint64_t x1, uint64_t x2, uint64_t x3)
 {
 	// initialize UART for Raspi2
-	uart_init(3);
+	uart_init(2);
 	uart_puts("Hello, Ms. Bear!\r\n");
  
 	while (1)

@@ -1,6 +1,8 @@
 #ifndef BCM2711_H_
 #define BCM2711_H_
 
+#define IO_BASE                     ((uint32_t)0x20000000)
+
 #define RCC_BASE                    ((uint32_t)0x7E200000)
 
 #define UART0_BASE                  ((uint32_t)0x7E201000)
