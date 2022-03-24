@@ -1,5 +1,4 @@
-#include <stddef.h>
-#include <stdint.h>
+#include "hal/common.h"
 #include "hal/bcm2837.h"
 #include "hal/gpio.h"
 #include "hal/mailbox.h"
@@ -10,21 +9,21 @@
 #define USART0						((USART_TypeDef *) USART0_BASE)
 
 // Loop <delay> times in a way that the compiler won't optimize away
-static inline void delay(int32_t count) {
-	for (int32_t i = 0; i < count; i++) {
+static inline void delay(u32 count) {
+	for (u32 i = 0; i < count; i++) {
 		asm volatile("nop");
 	}
 }
 
 /* Write to a pointer with raw value, ensure mask >= value 
    If passing a stuct pointer ie. GPIOB->ODR, you can pass by reference &GPIO->ODR */
-static inline void set_ptr_vol_raw_u32(volatile uint32_t *ptr, uint32_t value) {
+static inline void set_ptr_vol_raw_u32(volatile u32 *ptr, u32 value) {
     *ptr = value;
 }
 
 /* Get a pointer value 
    If passing a stuct pointer ie. GPIOB->ODR, you can pass by reference &GPIO->ODR */
-uint32_t get_ptr_vol_raw_u32(volatile uint32_t *ptr) {
+u32 get_ptr_vol_raw_u32(volatile u32 *ptr) {
     return *ptr; 
 }
 
@@ -62,7 +61,7 @@ void uart_init(int raspi)
 	// Set it to 3Mhz so that we can consistently set the baud rate
 	if (raspi >= 3) {
 		// UART_CLOCK = 30000000;
-		unsigned int r = (((uint32_t)(&mbox) & ~0xF) | 8);
+		unsigned int r = (((u32)(&mbox) & ~0xF) | 8);
 		// wait until we can talk to the VC
 		while ( get_ptr_vol_raw_u32(&MAILBOX0->STATUS) & 0x80000000 ) { }
 		// send our message to property channel and wait for the response
@@ -86,14 +85,14 @@ void uart_init(int raspi)
 	set_ptr_vol_raw_u32(&USART0->CR, (1 << 0) | (1 << 8) | (1 << 9));
 }
  
-void uart_putc(unsigned char c)
+void uart_putc(u8 c)
 {
 	// Wait for UART to become ready to transmit.
 	while ( get_ptr_vol_raw_u32(&USART0->FR) & (1 << 5) ) { }
 	set_ptr_vol_raw_u32(&USART0->DR, c);
 }
  
-unsigned char uart_getc()
+u8 uart_getc()
 {
     // Wait for UART to have received something.
     while ( get_ptr_vol_raw_u32(&USART0->FR) & (1 << 4) ) { }
@@ -102,11 +101,11 @@ unsigned char uart_getc()
  
 void uart_puts(const char* str)
 {
-	for (size_t i = 0; str[i] != '\0'; i ++)
-		uart_putc((unsigned char)str[i]);
+	for (u8 i = 0; str[i] != '\0'; i ++)
+		uart_putc((u8)str[i]);
 }
  
-void kernel_main(uint64_t dtb_ptr32, uint64_t x1, uint64_t x2, uint64_t x3)
+void kernel_main(u64 dtb_ptr32, u64 x1, u64 x2, u64 x3)
 {
 	// initialize UART for Raspi3
 	uart_init(3);
