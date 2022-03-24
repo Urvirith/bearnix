@@ -39,7 +39,7 @@ typedef struct {
     volatile uint32_t RESERVED9;        // RESERVED
     volatile uint32_t GPAFEN0;          // GPIO Pin Async Falling Edge Detect Enable
     volatile uint32_t GPAFEN1;          // GPIO Pin Async Falling Edge Detect Enable
-    volatile uint32_t RESERVED9;        // RESERVED
+    volatile uint32_t RESERVED10;        // RESERVED
     volatile uint32_t GPPUD;            // GPIO Pin Pull-Up/Pull-Down Enable
     volatile uint32_t GPPUDCLK0;        // GPIO Pin Pull-Up/Pull-Down Clock Enable
     volatile uint32_t GPPUDCLK1;        // GPIO Pin Pull-Up/Pull-Down Clock Enable

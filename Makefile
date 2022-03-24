@@ -16,7 +16,8 @@ TARGET_ARCH := -mcpu=cortex-$(ARCH)
 FREESTAND 	:= -ffreestanding
 WALL		:= -Wall -Wextra
 LINKTIME	:= -flto
-CFLAGS	  	:= -Os $(TARGET_ARCH) $(FREESTAND) $(WALL)
+OPTFLAGS	:= -Os
+CFLAGS	  	:= $(OPTFLAGS) $(TARGET_ARCH) $(FREESTAND) $(WALL)
 ASFLAGS		:= $(TARGET_ARCH)
 LDFLAGS 	:= -T
 OBJFLAGS	:= -O binary
@@ -67,13 +68,13 @@ $(BIN_DIR)/kernel8.img: $(BIN_DIR)/main.elf
 
 # Build An ELF 
 $(BIN_DIR)/main.elf: $(LINK_DIR)/$(LINKER) $(OBJS) $(BIN_DIR)/startup.o
-	$(LD) -Os -s $(LDFLAGS) $^ -o $@
+	$(LD) $(OPTFLAGS) -s $(LDFLAGS) $^ -o $@
 
 # Build Dependances
 $(BIN_DIR)/startup.o: $(START_DIR)/$(STARTUP)
 	$(AS) -c $< $(ASFLAGS) -o $@
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/%.h
 	$(CC) $(CFLAGS) -c  $< -o $@
 
 clean:
