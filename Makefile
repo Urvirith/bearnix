@@ -22,13 +22,14 @@ ASFLAGS		:= $(TARGET_ARCH)
 LDFLAGS 	:= -T
 OBJFLAGS	:= -O binary
 
-SRC_DIR   := ./src
-HAL_DIR   := $(SRC_DIR)/hal
-I2C_DRI   := $(SRC_DIR)/driver/i2c
-START_DIR := $(SRC_DIR)/startup
-LINK_DIR  := $(SRC_DIR)/linker
-OBJ_DIR	  := ./obj
-BIN_DIR	  := ./bin
+INC_DIR   := include
+SRC_DIR   := src
+KER_DIR   := kernel
+HAL_DIR   := hal
+START_DIR := startup
+LINK_DIR  := linker
+OBJ_DIR	  := obj
+BIN_DIR	  := bin
 
 #ONLY ONE
 STARTUP		:= startup.s
@@ -37,6 +38,8 @@ STARTUP		:= startup.s
 LINKER		:= linker.ld
 
 OBJS :=	$(OBJ_DIR)/main.o
+
+HAL_OBJS := $(OBJ_DIR)/common.o
 
 #	EXAMPLE OF AUTOMATIC VARIABLES
 #	%.o: %.c %.h common.h
@@ -56,8 +59,6 @@ OBJS :=	$(OBJ_DIR)/main.o
 #		$(CC) $(CFLAGS) -c $^
 release: $(BIN_DIR)/kernel8.img
 
-bin: $(BIN_DIR)/kernel8.bin
-
 # Build An BIN 
 $(BIN_DIR)/kernel8.bin: $(BIN_DIR)/main.elf
 	$(OBJ) $(OBJFLAGS) $^ $@
@@ -67,15 +68,28 @@ $(BIN_DIR)/kernel8.img: $(BIN_DIR)/main.elf
 	$(OBJ) $(OBJFLAGS) $^ $@
 
 # Build An ELF 
-$(BIN_DIR)/main.elf: $(LINK_DIR)/$(LINKER) $(OBJS) $(BIN_DIR)/startup.o
+$(BIN_DIR)/main.elf: $(KER_DIR)/$(LINK_DIR)/$(LINKER) $(OBJS) $(BIN_DIR)/startup.o
 	$(LD) $(OPTFLAGS) -s $(LDFLAGS) $^ -o $@
 
 # Build Dependances
-$(BIN_DIR)/startup.o: $(START_DIR)/$(STARTUP)
+$(BIN_DIR)/startup.o: $(KER_DIR)/$(START_DIR)/$(STARTUP)
 	$(AS) -c $< $(ASFLAGS) -o $@
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/%.h
-	$(CC) $(CFLAGS) -c  $< -o $@
+$(OBJ_DIR)/%.o: $(KER_DIR)/$(SRC_DIR)/%.c 
+	$(CC) -I $(KER_DIR)/$(INC_DIR) $(CFLAGS) -c  $< -o $@
+
+hal: $(BIN_DIR)/hal.bin
+
+# Build An IMG 
+$(BIN_DIR)/hal.bin: $(BIN_DIR)/hal.elf
+	$(OBJ) $(OBJFLAGS) $^ $@
+
+# Build An ELF 
+$(BIN_DIR)/hal.elf: $(HAL_OBJS)
+	$(LD) $(OPTFLAGS) -s $(LDFLAGS) $^ -o $@
+
+$(OBJ_DIR)/%.o: $(HAL_DIR)/$(SRC_DIR)/%.c
+	$(CC) -I $(HAL_DIR)/$(INC_DIR) $(CFLAGS) -c  $< -o $@
 
 clean:
 	rm -f $(OBJ_DIR)/*.o
