@@ -1,8 +1,4 @@
-#include "common.h"
-#include "bcm2837.h"
-#include "gpio.h"
-#include "mailbox.h"
-#include "usart.h"
+#include "main.h"
 
 #define GPIO						((GPIO_TypeDef *) GPIO_BASE)
 #define MAILBOX0					((MAILBOX_TypeDef *) MAILBOX0_BASE)
@@ -15,25 +11,12 @@ static inline void delay(u32 count) {
 	}
 }
 
-/* Write to a pointer with raw value, ensure mask >= value 
-   If passing a stuct pointer ie. GPIOB->ODR, you can pass by reference &GPIO->ODR */
-static inline void set_ptr_vol_raw_u32(volatile u32 *ptr, u32 value) {
-    *ptr = value;
-}
-
-/* Get a pointer value 
-   If passing a stuct pointer ie. GPIOB->ODR, you can pass by reference &GPIO->ODR */
-u32 get_ptr_vol_raw_u32(volatile u32 *ptr) {
-    return *ptr; 
-}
-
 // A Mailbox message with set clock rate of PL011 to 3MHz tag
 volatile u32 mbox[9] = {
     9*4, 0, 0x38002, 12, 8, 2, 3000000, 0 ,0
 };
  
-void uart_init(int raspi)
-{ 
+void uart_init(int raspi) { 
 	// Disable UART0.
 	set_ptr_vol_raw_u32(&USART0->CR, 0x00000000);
 	// Setup the GPIO pin 14 && 15.
@@ -85,28 +68,24 @@ void uart_init(int raspi)
 	set_ptr_vol_raw_u32(&USART0->CR, (1 << 0) | (1 << 8) | (1 << 9));
 }
  
-void uart_putc(u8 c)
-{
+void uart_putc(u8 c) {
 	// Wait for UART to become ready to transmit.
 	while ( get_ptr_vol_raw_u32(&USART0->FR) & (1 << 5) ) { }
 	set_ptr_vol_raw_u32(&USART0->DR, c);
 }
  
-u8 uart_getc()
-{
+u8 uart_getc() {
     // Wait for UART to have received something.
     while ( get_ptr_vol_raw_u32(&USART0->FR) & (1 << 4) ) { }
     return get_ptr_vol_raw_u32(&USART0->DR);
 }
  
-void uart_puts(const char* str)
-{
+void uart_puts(const char* str) {
 	for (u8 i = 0; str[i] != '\0'; i ++)
 		uart_putc((u8)str[i]);
 }
  
-void kernel_main(u64 dtb_ptr32, u64 x1, u64 x2, u64 x3)
-{
+void main(u64 dtb_ptr32, u64 x1, u64 x2, u64 x3) {
 	// initialize UART for Raspi3
 	uart_init(3);
 	uart_puts("Hello, Ms. Bear!\r\n");

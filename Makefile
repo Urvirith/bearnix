@@ -6,6 +6,7 @@ CC		    := $(TOOLCHAIN)gcc		# c compiler
 AS			:= $(TOOLCHAIN)as		# assembler
 LD 			:= $(TOOLCHAIN)ld 		# linker
 OBJ 		:= $(TOOLCHAIN)objcopy	# Object Copy
+READELF		:= $(TOOLCHAIN)readelf  # Read Elf
 
 # -Os				Optimize for Size
 # -mcpu=cortex-m4	Compile for the ARM M4 Processor
@@ -22,14 +23,15 @@ ASFLAGS		:= $(TARGET_ARCH)
 LDFLAGS 	:= -T
 OBJFLAGS	:= -O binary
 
-INC_DIR   := include
+INC_DIR   := inc
 SRC_DIR   := src
-KER_DIR   := kernel
-HAL_DIR   := hal
 START_DIR := startup
 LINK_DIR  := linker
 OBJ_DIR	  := obj
 BIN_DIR	  := bin
+KER_DIR   := kernel
+HAL_DIR   := bcm2837_hal
+LIB_DIR   := lib
 
 #ONLY ONE
 STARTUP		:= startup.s
@@ -39,7 +41,7 @@ LINKER		:= linker.ld
 
 OBJS :=	$(OBJ_DIR)/main.o
 
-HAL_OBJS := $(OBJ_DIR)/common.o
+HAL_OBJS := $(OBJ_DIR)/main.o
 
 #	EXAMPLE OF AUTOMATIC VARIABLES
 #	%.o: %.c %.h common.h
@@ -59,10 +61,6 @@ HAL_OBJS := $(OBJ_DIR)/common.o
 #		$(CC) $(CFLAGS) -c $^
 release: $(BIN_DIR)/kernel8.img
 
-# Build An BIN 
-$(BIN_DIR)/kernel8.bin: $(BIN_DIR)/main.elf
-	$(OBJ) $(OBJFLAGS) $^ $@
-
 # Build An IMG 
 $(BIN_DIR)/kernel8.img: $(BIN_DIR)/main.elf
 	$(OBJ) $(OBJFLAGS) $^ $@
@@ -76,20 +74,23 @@ $(BIN_DIR)/startup.o: $(KER_DIR)/$(START_DIR)/$(STARTUP)
 	$(AS) -c $< $(ASFLAGS) -o $@
 
 $(OBJ_DIR)/%.o: $(KER_DIR)/$(SRC_DIR)/%.c 
-	$(CC) -I $(KER_DIR)/$(INC_DIR) $(CFLAGS) -c  $< -o $@
+	$(CC) -I $(KER_DIR)/$(INC_DIR) -I $(LIB_DIR)/$(INC_DIR) $(CFLAGS) -c  $< -o $@
 
 hal: $(BIN_DIR)/hal.bin
 
-# Build An IMG 
+# Build An BIN 
 $(BIN_DIR)/hal.bin: $(BIN_DIR)/hal.elf
 	$(OBJ) $(OBJFLAGS) $^ $@
 
 # Build An ELF 
 $(BIN_DIR)/hal.elf: $(HAL_OBJS)
-	$(LD) $(OPTFLAGS) -s $(LDFLAGS) $^ -o $@
+	$(LD) $(OPTFLAGS) $^ -o $@
 
 $(OBJ_DIR)/%.o: $(HAL_DIR)/$(SRC_DIR)/%.c
-	$(CC) -I $(HAL_DIR)/$(INC_DIR) $(CFLAGS) -c  $< -o $@
+	$(CC) -I $(HAL_DIR)/$(INC_DIR) -I $(LIB_DIR)/$(INC_DIR) $(CFLAGS) -c  $< -o $@
+
+read:
+	$(READELF) -a $(BIN_DIR)/hal.elf
 
 clean:
 	rm -f $(OBJ_DIR)/*.o
